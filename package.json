@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "backend": "node backend/app.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.17.3",
+    "express-generator": "^4.16.1",
+    "lorem-ipsum": "^2.0.4",
+    "morgan": "^1.10.0"
+  }
+}
