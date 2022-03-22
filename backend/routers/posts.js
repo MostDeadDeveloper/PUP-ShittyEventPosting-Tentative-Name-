@@ -1,111 +1,93 @@
-const { LoremIpsum } = require('lorem-ipsum');
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
-const loremGenerator = new LoremIpsum({
-    sentencesPerParagraph: {
-        max: 8,
-        min: 4
-    },
-    wordsPerSentence: {
-        max: 16,
-        min: 4
-    }
+// TODO: Move to config file or environment variables
+const DB_HOST = '127.0.0.1';
+const DB_PORT = '27017';
+const DB_NAME = 'pfupDB';
+
+// Perform initial connection
+mongoose.connect(
+    "mongodb://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME,
+    { useNewUrlParser: true })
+    .catch(err => {
+        console.log(err);
+        process.exit(1);
+    });
+
+/**
+ * List of stuff for the API design
+ * TODO: Implement paging and sorting on GET.
+ * TODO: Follow the HATEOAS principle.
+ * TODO: Add validation code for POST,PUT,PATCH.
+ * TODO: Make PUT overwrite whole document of an entity.
+ */
+
+// Mongoose Models
+const Post = mongoose.model('Post', {
+    'memberName': String,
+    'dateCreated': Date,
+    'eventURL': String,
+    'title': String,
+    'body': String
 });
-
-// Global TODO: Follow Hypermedia as the engine of application state (HATEOAS) principle
-
-// TODO: temporary repository, replace later with MongoDB
-var posts = [
-    {
-        'id': 1,
-        'member_name': 'Test User',
-        'date_created': new Date(),
-        'event_url': 'https://www.lipsum.com/',
-        'title': 'Some Shitpost Title',
-        'body': loremGenerator.generateParagraphs(2)
-    },
-    {
-        'id': 2,
-        'member_name': 'Another User',
-        'date_created': new Date(),
-        'event_url': 'https://www.lipsum.com/',
-        'title': 'Another shitpost Title',
-        'body': loremGenerator.generateParagraphs(2)
-    }
-];
 
 // Resource Endpoints
 
 // GET
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
+    const posts = await Post.find();
     res.json(posts);
 });
 
 // GET with ID filter 
-router.get('/:id([0-9]{1,})', (req, res, next) => {
-    var retrievedPosts = posts.filter((post) => post.id == req.params.id);
-    if(retrievedPosts.length == 1)
-        res.json(retrievedPosts[0]);
-    else {
-        res.status(404);
-        res.json({ message: 'Post with specified ID does not exist.' });
-    }
+router.get('/:id', (req, res, next) => {
+    Post.findById(req.params.id)
+        .then((result) => {
+            result = result.toJSON();
+            delete result.__v;
+            res.status(200).send(result);
+        }).catch((err) => {
+            res.status(404).send();
+        });
 });
 
 // POST
-router.post('/', (req, res, next) => {
+router.post('/', async (req, res, next) => {
     // TODO: add validation layer
-    posts.push({
-        'id': posts[posts.length - 1].id + 1,
-        'member_name': req.body.member_name,
-        'date_created': new Date(),
-        'event_url': req.body.event_url,
-        'title': req.body.title,
-        'body': req.body.body
-    });
-    res.json({
-        'message': 'Successfully created post.',
-        'post': posts[posts.length - 1]
-    });
+    new Post(req.body)
+        .save()
+        .then((result) => {
+            res.status(201).json(result);
+        });
 });
 
 // PUT
-router.put('/:id([0-9]{1,})', (req, res, next) => {
-    // TODO: add validation layer
-    var postIndex = posts.findIndex((post) => post.id == req.params.id);
-    if(postIndex != -1) {
-        // Update that specific post
-        var post = posts[postIndex];
-        post.member_name = req.body.member_name;
-        post.date_created = req.body.date_created;
-        post.event_url = req.body.event_url;
-        post.title = req.body.title;
-        post.body = req.body.body;
-        // Return a 200 with empty body
-        res.status(200);
-        res.send();
-    } else {
-        // Return a 404 not found
-        res.status(404);
-        res.json({ 'message': 'Post with specified ID does not exist.' });
-    }
+router.put('/:id', (req, res, next) => {
+    Post.findOneAndUpdate({_id: req.params.id}, req.body)
+        .then((result) => {
+            res.status(204).send();
+        });
+});
+
+// PATCH
+router.patch('/:id', (req, res, next) => {
+    Post.findOneAndUpdate({_id: req.params.id}, req.body)
+        .then((result) => {
+            res.status(204).send();
+        });
 });
 
 // DELETE with ID filter
-router.delete('/:id([0-9]{1,})', (req, res, next) => {
-    var postIndex = posts.findIndex((post) => post.id == req.params.id);
-    if(postIndex != -1) {
-        // Remove that specific post
-        posts.splice(postIndex, 1);
-        // Return a 204 with empty body
-        res.status(204);
-        res.send();
-    } else {
-        // Return a 404 not found
-        res.status(404);
-        res.json({ 'message': 'Post with specified ID does not exist.' });
-    }
+router.delete('/:id', (req, res, next) => {
+    Post.findOneAndDelete({_id: req.params.id})
+        .then((result) => {
+            res.status(204).send();
+        })
+        .catch((err) => {
+            res.status(404).send();
+        });
 });
 
 module.exports = router;
