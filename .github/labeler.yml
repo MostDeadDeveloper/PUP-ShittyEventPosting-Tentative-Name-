@@ -1,2 +1,2 @@
 frontend-change:
-- any: ['pages/*','components/*','layouts/*','pages/*','store/*' ]
+- pages/**/*.vue
