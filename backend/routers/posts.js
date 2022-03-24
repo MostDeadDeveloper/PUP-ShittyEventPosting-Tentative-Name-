@@ -1,20 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-
-// TODO: Move to config file or environment variables
-const DB_HOST = '127.0.0.1';
-const DB_PORT = '27017';
-const DB_NAME = 'pfupDB';
-
-// Perform initial connection
-mongoose.connect(
-    "mongodb://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME,
-    { useNewUrlParser: true })
-    .catch(err => {
-        console.log(err);
-        process.exit(1);
-    });
 
 /**
  * List of stuff for the API design
@@ -25,20 +10,13 @@ mongoose.connect(
  */
 
 // Mongoose Models
-const Post = mongoose.model('Post', {
-    'memberName': String,
-    'dateCreated': Date,
-    'eventURL': String,
-    'title': String,
-    'body': String
-});
+const Post = require('../models/post');
 
 // Resource Endpoints
 
 // GET
 router.get('/', async (req, res, next) => {
-    const posts = await Post.find();
-    res.json(posts);
+    res.json(await Post.find());
 });
 
 // GET with ID filter 
@@ -59,7 +37,10 @@ router.post('/', async (req, res, next) => {
     new Post(req.body)
         .save()
         .then((result) => {
-            res.status(201).json(result);
+            res.status(201).json({
+                message: 'Successfully created Post.',
+                result
+            });
         });
 });
 
@@ -67,7 +48,10 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', (req, res, next) => {
     Post.findOneAndUpdate({_id: req.params.id}, req.body)
         .then((result) => {
-            res.status(204).send();
+            res.status(204).send({
+                message: 'Successfully updated Post.',
+                result
+            });
         });
 });
 
@@ -75,7 +59,10 @@ router.put('/:id', (req, res, next) => {
 router.patch('/:id', (req, res, next) => {
     Post.findOneAndUpdate({_id: req.params.id}, req.body)
         .then((result) => {
-            res.status(204).send();
+            res.status(204).send({
+                message: 'Successfully updated Post.',
+                result
+            });
         });
 });
 
@@ -83,7 +70,9 @@ router.patch('/:id', (req, res, next) => {
 router.delete('/:id', (req, res, next) => {
     Post.findOneAndDelete({_id: req.params.id})
         .then((result) => {
-            res.status(204).send();
+            res.status(204).send({
+                message: 'Successfully removed Post.'
+            });
         })
         .catch((err) => {
             res.status(404).send();

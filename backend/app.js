@@ -1,24 +1,31 @@
+
+const cookieParser = require('cookie-parser');
+const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
+require('dotenv').config();
+
 const PORT = process.env.PORT || 8000;
 const HOSTNAME = process.env.HOSTNAME || '127.0.0.1';
 
-// API stuff
-const API_PREFIX_START = '/api/';
-const API_VERSION = 1;
-const API_PREFIX = API_PREFIX_START + 'v' + API_VERSION;
+// Database connection
+const DB_URL = process.env.DB_URL;
+if (!DB_URL) {
+    DB_URL = 'mongodb://localhost:27017/pfupDB';
+    console.log(`Database configuration URL is not set.
+                 Defaulting to ${DB_URL}.`);
+}
+mongoose.connect(process.env.DB_URL, { useNewUrlParser: true })
+    .catch(err => console.log(err));
 
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const express = require('express');
-const app = express();
-
-app.use(logger('dev'));
+// Base Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // API routers
-app.use(API_PREFIX + "/posts", require('./routers/posts'));
+const API_BASE_URL = process.env.API_BASE_URL || '/api/v1';
+app.use(API_BASE_URL + "/posts", require('./routers/posts'));
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://${HOSTNAME}:${PORT}`);
-});
+app.listen(PORT,
+    () => console.log(`Server running at https://${HOSTNAME}:${PORT}`));
