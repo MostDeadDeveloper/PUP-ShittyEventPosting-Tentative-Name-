@@ -1,5 +1,6 @@
 # PuP-F-Up
 PUP - Fuck-Up Moments - An initiative to document all  god forsaken moments of PUP.
+a **god-forsaken-moment** is anything that is memorable and unique that should not be forgotten in the sands of time, for it maybe something that can be a memorable history for other PUP Students
 
 ## Build Setup
 
